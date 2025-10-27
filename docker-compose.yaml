@@ -1,0 +1,37 @@
+services:
+  # API / Backend Service
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: hrstud_fastapi_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    # volumes:
+    #   - .:/app
+
+  # Frontend Service (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: hrstud_nextjs_frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
+
+  # Cache Service (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: hrstud_redis_cache
+    # ports:
+    #   - "6379:6379"
+
