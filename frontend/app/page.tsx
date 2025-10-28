@@ -215,7 +215,7 @@ export default function App() {
         id: 1,
         role: 'assistant',
         // Example of markdown content to test the new renderer
-        content: "# Dobrodošli u Hrstud AI\n\nJa sam vaš AI asistent, spreman odgovoriti na pitanja vezana za fakultet Hrvatskih studija.",
+        content: "# Dobrodošli u Hrstud Bot\n\nJa sam vaš AI asistent, spreman odgovoriti na pitanja vezana za fakultet Hrvatskih studija.",
     };
 
     const [messages, setMessages] = useState<MessageType[]>([initialMessage]);
@@ -252,7 +252,7 @@ export default function App() {
 
         // 2. Call the LOCAL FastAPI API
         try {
-            // Calling the new local API function
+            // 💡 Calling the new local API function
             const response = await callLocalAPI(userQuery);
 
             // 3. Remove loading message and add actual response
@@ -298,7 +298,7 @@ export default function App() {
                     <div className="flex items-center space-x-3">
                         <BotIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Hrstud AI
+                            Hrstud Bot
                         </h1>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -327,7 +327,7 @@ export default function App() {
                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none 
                                      bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors duration-200
                                      disabled:opacity-75 disabled:cursor-not-allowed"
-                            placeholder={isLoading ? "Odgovor AI..." : "Pitajte AI nešto..."}
+                            placeholder={isLoading ? "Odgovor HR bota..." : "Pitajte HR bota nešto..."}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => {

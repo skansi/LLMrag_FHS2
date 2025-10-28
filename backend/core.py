@@ -21,20 +21,33 @@ try:
     
     print(f"Successfully connected to Redis at {REDIS_HOST}:{REDIS_PORT}. Rate limiting is active.")
 except redis.exceptions.ConnectionError as e:
-
     print(f"Error connecting to Redis at {REDIS_HOST}:{REDIS_PORT}: {e}")
     print("Rate limiting will be DISABLED. Ensure Redis is running if needed.")
     r = None
 
 RATE_LIMIT_WINDOW_SECONDS = 60
 RATE_LIMIT_MAX_REQUESTS = 3
+RATE_LIMIT_PENALTY_SECONDS = 30
 
 def check_rate_limit(client_ip: str) -> bool:
     if r is None:
         return True
 
+    # Check if user is currently in penalty period
+    penalty_key = f"rl:penalty:{client_ip}"
+    try:
+        if r.exists(penalty_key):
+            ttl = r.ttl(penalty_key)
+            print(f"IP {client_ip} is in penalty period. {ttl} seconds remaining.")
+            return False
+    except redis.exceptions.RedisError as re:
+        print(f"Redis operation failed checking penalty: {re}. Allowing request for safety.")
+        return True
+
+    # Check rate limit
     current_time_window = int(time.time() // RATE_LIMIT_WINDOW_SECONDS)
     redis_key = f"rl:{client_ip}:{current_time_window}"
+    
     try:
         pipe = r.pipeline()
         pipe.incr(redis_key)
@@ -47,6 +60,14 @@ def check_rate_limit(client_ip: str) -> bool:
 
     if new_count > RATE_LIMIT_MAX_REQUESTS:
         print(f"RATE LIMIT EXCEEDED for IP: {client_ip}. Count: {new_count}")
+        
+        # Set penalty period
+        try:
+            r.setex(penalty_key, RATE_LIMIT_PENALTY_SECONDS, "1")
+            print(f"Penalty period of {RATE_LIMIT_PENALTY_SECONDS}s set for IP: {client_ip}")
+        except redis.exceptions.RedisError as re:
+            print(f"Failed to set penalty: {re}")
+        
         return False
     
     return True 
@@ -104,7 +125,7 @@ def persistent_client_hr(embed_fn):
 def persistent_client_en(embed_fn):
     persist_dir = "./output_en"
     chroma_client = chromadb.PersistentClient(path=persist_dir)
-    DB_NAME = "hrstud-bot-hr"
+    DB_NAME = "hrstud-bot-en"
     collection = chroma_client.get_collection(DB_NAME, embedding_function=embed_fn)
     return collection
 
@@ -228,7 +249,7 @@ def get_query_hr(user_query, embed_fn, collection, client, request_ip: str):
     return answer.text.strip()
 
 
-def get_article_en(user_query, embed_fn, collection, client):
+def get_query_en(user_query, embed_fn, collection, client, request_ip: str):
     
     embed_fn.document_mode = False
     n_results_to_fetch = 7
