@@ -2,29 +2,21 @@
 
 import React, { useState, useRef, useEffect, SVGProps } from 'react';
 import ReactMarkdown from 'react-markdown';
-// REMOVE THIS LINE: The import of CodeProps is causing the new error (2614)
-// import { CodeProps } from 'react-markdown/lib/ast-to-react'; 
 
 // --- Types and Constants ---
 
-// Define types for better TypeScript compatibility
 type MessageType = {
     id: number;
-    role: 'user' | 'assistant' | 'loading'; // 'loading' is for the typing indicator
+    role: 'user' | 'assistant' | 'loading';
     content: string;
 };
 
-// Define the type for SVG props to fix the TypeScript error
 type IconProps = SVGProps<SVGSVGElement>;
 
-// NEW CONSTANT: URL for your local FastAPI service running in Docker
-const LOCAL_API_URL = 'http://127.0.0.1:8000/query'; 
+const LOCAL_API_URL = 'http://127.0.0.1:8000/query';
 
 // --- Icon Components ---
 
-/**
- * Custom Bot Icon based on the user-provided SVG paths.
- */
 const BotIcon = (props: IconProps) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bot-custom">
         <path d="M12 8V4H8"/>
@@ -36,11 +28,7 @@ const BotIcon = (props: IconProps) => (
     </svg>
 );
 
-/**
- * Custom User Icon (lucide-user-round).
- */
 const UserIcon = (props: IconProps) => (
-    // The provided SVG path is integrated here
     <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-user-round-icon lucide-user-round">
         <circle cx="12" cy="8" r="5"/>
         <path d="M20 21a8 8 0 0 0-16 0"/>
@@ -54,14 +42,13 @@ const SendIcon = (props: IconProps) => (
     </svg>
 );
 
-// --- Typing Indicator Component (No changes here) ---
+// --- Typing Indicator Component ---
 
 const TypingIndicator: React.FC = () => (
     <div className="flex items-center space-x-1 p-3 rounded-2xl bg-gray-100 dark:bg-gray-800 rounded-tl-sm shadow-sm text-sm">
         <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse-slow delay-0"></div>
         <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse-slow delay-200"></div>
         <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse-slow delay-400"></div>
-        {/* CSS for custom animation */}
         <style jsx global>{`
             @keyframes pulse-slow {
                 0%, 100% { opacity: 0.5; }
@@ -77,19 +64,18 @@ const TypingIndicator: React.FC = () => (
     </div>
 );
 
-// --- Message Component (FIXED: TypeScript error on Code component) ---
+// --- Message Component ---
+
 const Message: React.FC<Pick<MessageType, 'content' | 'role'>> = ({ content, role }) => {
     const isUser = role === 'user';
     const isLoading = role === 'loading';
 
-    // 💡 NEW TYPE DEFINITION for code component props
     type CustomCodeProps = React.ComponentProps<'code'> & { inline?: boolean };
 
     if (isLoading) {
         return (
             <div className={`flex w-full justify-start mb-4`}>
                 <div className="flex items-start space-x-2.5">
-                    {/* Bot Avatar */}
                     <div className="flex h-8 w-8 items-center justify-center rounded-full text-lg font-mono bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
                         <BotIcon className="w-5 h-5" />
                     </div>
@@ -102,49 +88,41 @@ const Message: React.FC<Pick<MessageType, 'content' | 'role'>> = ({ content, rol
     return (
         <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
             <div className={`flex max-w-lg ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start space-x-2.5`}>
-                {/* Avatar: Both user and bot use the neutral gray style for the icon/avatar container */}
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full text-lg font-mono bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200`}>
                     {isUser 
-                        ? <UserIcon className="w-5 h-5" /> // Inherits the neutral gray/white stroke color
+                        ? <UserIcon className="w-5 h-5" />
                         : <BotIcon className="w-5 h-5" />
                     }
                 </div>
                 
-                {/* Message Bubble - Conditional Styling */}
                 <div className={`
                     p-3 rounded-2xl max-w-xs sm:max-w-sm lg:max-w-md 
                     shadow-md text-sm transition-colors duration-200
                     ${isUser
-                        ? 'bg-blue-600 text-white rounded-tr-sm whitespace-pre-wrap' // User message bubble remains blue
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-sm' // Assistant message uses markdown formatting
+                        ? 'bg-blue-600 text-white rounded-tr-sm whitespace-pre-wrap'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-100 rounded-tl-sm'
                     }
                 `}>
                     {isUser ? (
-                        // User message: simple text content
                         content
                     ) : (
-                        // Assistant message: Render Markdown using ReactMarkdown
                         <ReactMarkdown
-                            // Components object to apply Tailwind classes to standard HTML output
                             components={{
                                 p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
                                 a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 underline">{children}</a>,
                                 ul: ({ children }) => <ul className="list-disc ml-5 mb-2 space-y-1">{children}</ul>,
                                 ol: ({ children }) => <ol className="list-decimal ml-5 mb-2 space-y-1">{children}</ol>,
-                                // Inline code - Props are now correctly typed using standard React types + inline
-                                code: (props: CustomCodeProps) => { // <-- FIX APPLIED HERE
+                                code: (props: CustomCodeProps) => {
                                     const { inline, children } = props;
                                     if (inline) {
                                         return <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded text-red-600 dark:text-red-400 text-[0.8rem] font-mono">{children}</code>;
                                     }
-                                    // Block code
                                     return (
                                         <pre className="bg-gray-900 text-gray-100 p-3 my-2 rounded-lg overflow-x-auto text-[0.75rem] font-mono">
                                             <code>{children}</code>
                                         </pre>
                                     );
                                 },
-                                // Tables (These may not render without remark-gfm, but the structure is retained)
                                 table: ({ children }) => <div className="overflow-x-auto my-3"><table className="w-full text-left border-collapse my-2 text-xs table-auto border border-gray-400 dark:border-gray-600 rounded-lg overflow-hidden">{children}</table></div>,
                                 thead: ({ children }) => <thead className="bg-gray-200 dark:bg-gray-700">{children}</thead>,
                                 th: ({ children }) => <th className="border border-gray-300 dark:border-gray-600 p-2 font-semibold text-gray-800 dark:text-gray-100">{children}</th>,
@@ -164,12 +142,9 @@ const Message: React.FC<Pick<MessageType, 'content' | 'role'>> = ({ content, rol
     );
 };
 
-// --- NEW API Function (Local FastAPI Call) ---
-/**
- * Sends a POST request to the local FastAPI /query endpoint.
- */
+// --- API Function ---
+
 async function callLocalAPI(userQuery: string) {
-    // 💡 This payload matches the QueryRequest(BaseModel) structure on your FastAPI server
     const payload = {
         query: userQuery 
     };
@@ -184,15 +159,12 @@ async function callLocalAPI(userQuery: string) {
         const response = await fetch(LOCAL_API_URL, fetchOptions);
 
         if (!response.ok) {
-            // Handle HTTP errors from FastAPI (like 500 from your HTTPException)
             const errorBody = await response.json();
             const detail = errorBody.detail || 'Unknown server error';
             return { text: `[Error: HR API Status ${response.status}. Detail: ${detail}]` };
         }
 
         const result = await response.json();
-        
-        // The FastAPI endpoint returns: {"response": response_text}
         const responseText = result.response; 
 
         if (responseText) {
@@ -203,19 +175,16 @@ async function callLocalAPI(userQuery: string) {
 
     } catch (error) {
         console.error("Local API call failed:", error);
-        // This catches network errors (e.g., if Docker container is not running)
         return { text: "[Error: Could not connect to the HR API service. Is the Docker container running on port 8000?]" };
     }
 }
 
-
-// --- Main Chat Application Component ---
+// --- Main Chat Application Component (Fixed for iframe) ---
 export default function App() {
     const initialMessage: MessageType = {
         id: 1,
         role: 'assistant',
-        // Example of markdown content to test the new renderer
-        content: "# Dobrodošli u Hrstud Bot\n\nJa sam vaš AI asistent, spreman odgovoriti na pitanja vezana za fakultet Hrvatskih studija.",
+        content: "# Dobrodošli u Hrstud AI\n\nJa sam vaš AI asistent, spreman odgovoriti na pitanja vezana za fakultet Hrvatskih studija.",
     };
 
     const [messages, setMessages] = useState<MessageType[]>([initialMessage]);
@@ -223,14 +192,12 @@ export default function App() {
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Scroll to the bottom whenever messages update
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
     useEffect(scrollToBottom, [messages]);
 
-    // Handle sending a user message
     const handleSend = async () => {
         if (input.trim() === '' || isLoading) return;
 
@@ -241,26 +208,19 @@ export default function App() {
             content: userQuery,
         };
         
-        // 1. Add user message and temporary loading message
         setMessages(prev => [
             ...prev, 
             newUserMessage,
-            { id: Date.now() + 1, role: 'loading', content: '...' } // Temporary loading message
+            { id: Date.now() + 1, role: 'loading', content: '...' }
         ]);
         setInput('');
         setIsLoading(true);
 
-        // 2. Call the LOCAL FastAPI API
         try {
-            // 💡 Calling the new local API function
             const response = await callLocalAPI(userQuery);
 
-            // 3. Remove loading message and add actual response
             setMessages(prev => {
-                // Find and remove the loading message
                 const updatedMessages = prev.filter(msg => msg.role !== 'loading');
-                
-                // Add the new assistant response
                 return [
                     ...updatedMessages,
                     {
@@ -272,7 +232,6 @@ export default function App() {
             });
         } catch (error) {
             console.error("Chat failed:", error);
-            // Fallback: Add an error message
             setMessages(prev => {
                 const updatedMessages = prev.filter(msg => msg.role !== 'loading');
                 return [
@@ -290,15 +249,26 @@ export default function App() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 sm:p-6 transition-colors duration-300 font-sans">
-            <div className="w-full max-w-4xl h-[90vh] bg-white dark:bg-gray-950 shadow-2xl rounded-2xl flex flex-col border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <>
+            {/* CSS Reset for iframe compatibility */}
+            <style>{`
+                html, body, #root {
+                    margin: 0;
+                    padding: 0;
+                    height: 100%;
+                    width: 100%;
+                    overflow: hidden;
+                }
+            `}</style>
+            
+            <div className="relative w-full h-full bg-white dark:bg-gray-950 flex flex-col overflow-hidden">
                 
-                {/* Header (Minimal Shadcn Card Header Style) */}
+                {/* Header */}
                 <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 sticky top-0 z-10">
                     <div className="flex items-center space-x-3">
                         <BotIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Hrstud Bot
+                            Hrstud AI
                         </h1>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -311,9 +281,7 @@ export default function App() {
 
                 {/* Message Area */}
                 <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-                    
                     {messages.map((msg) => (
-                        // Type casting ensures the role is one of the valid values for the Message component
                         <Message key={msg.id} content={msg.content} role={msg.role as 'user' | 'assistant'} />
                     ))}
                     <div ref={messagesEndRef} />
@@ -327,7 +295,7 @@ export default function App() {
                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none 
                                      bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors duration-200
                                      disabled:opacity-75 disabled:cursor-not-allowed"
-                            placeholder={isLoading ? "Odgovor HR bota..." : "Pitajte HR bota nešto..."}
+                            placeholder={isLoading ? "Odgovor AI..." : "Pitajte AI nešto..."}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => {
@@ -352,6 +320,6 @@ export default function App() {
                     </div>
                 </footer>
             </div>
-        </div>
+        </>
     );
 };
