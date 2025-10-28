@@ -1,6 +1,7 @@
 # Chatbot React App (Demo)
-1. run ```docker compose up --build```
-2. visit app at localhost:3000
+1. cd to backend/ and run touch .env && nano .env and add your GOOGLE_API_KEY from https://aistudio.google.com/app/api-keys
+2. run ```docker compose up --build```
+3. visit app at localhost:3000
 
 # Demo the bot on the website
 1. In VS Code run index.html with [Live Server](https://marketplace.visualstudio.com/items?itemName=yandeu.five-server)
